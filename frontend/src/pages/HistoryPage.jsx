@@ -19,10 +19,14 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 function getRiskColor(category) {
     const map = {
         'Stable': '#10b981',
-        'Systemic Inflammation': '#f59e0b',
+        'Mild Abnormality': '#60a5fa',
+        'Sepsis / SIRS': '#f59e0b',
         'Cardiac Risk': '#f97316',
         'Respiratory Failure': '#ef4444',
-        'Critical Deterioration': '#dc2626',
+        'Hypertensive Crisis': '#a855f7',
+        'Hemodynamic Shock': '#e11d48',
+        'Multi-Organ Risk': '#dc2626',
+        'Critical Deterioration': '#991b1b',
     };
     return map[category] || '#6366f1';
 }

@@ -21,10 +21,14 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 function getRiskColor(category) {
     const map = {
         'Stable': '#10b981',
-        'Systemic Inflammation': '#f59e0b',
+        'Mild Abnormality': '#60a5fa',
+        'Sepsis / SIRS': '#f59e0b',
         'Cardiac Risk': '#f97316',
         'Respiratory Failure': '#ef4444',
-        'Critical Deterioration': '#dc2626',
+        'Hypertensive Crisis': '#a855f7',
+        'Hemodynamic Shock': '#e11d48',
+        'Multi-Organ Risk': '#dc2626',
+        'Critical Deterioration': '#991b1b',
     };
     return map[category] || '#6366f1';
 }
@@ -32,10 +36,14 @@ function getRiskColor(category) {
 function getRiskBg(category) {
     const map = {
         'Stable': 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20',
-        'Systemic Inflammation': 'from-amber-500/10 to-amber-500/5 border-amber-500/20',
+        'Mild Abnormality': 'from-blue-400/10 to-blue-400/5 border-blue-400/20',
+        'Sepsis / SIRS': 'from-amber-500/10 to-amber-500/5 border-amber-500/20',
         'Cardiac Risk': 'from-orange-500/10 to-orange-500/5 border-orange-500/20',
         'Respiratory Failure': 'from-red-500/10 to-red-500/5 border-red-500/20',
-        'Critical Deterioration': 'from-red-600/10 to-red-600/5 border-red-600/20',
+        'Hypertensive Crisis': 'from-purple-500/10 to-purple-500/5 border-purple-500/20',
+        'Hemodynamic Shock': 'from-rose-600/10 to-rose-600/5 border-rose-600/20',
+        'Multi-Organ Risk': 'from-red-600/10 to-red-600/5 border-red-600/20',
+        'Critical Deterioration': 'from-red-900/10 to-red-900/5 border-red-900/20',
     };
     return map[category] || 'from-indigo-500/10 to-indigo-500/5 border-indigo-500/20';
 }
@@ -218,6 +226,11 @@ export default function Dashboard() {
                                                 </span>
                                             )}
                                         </div>
+                                        {prediction?.clinical_reasoning && (
+                                            <p className="mt-2 text-xs text-slate-500 italic leading-relaxed">
+                                                🩺 {prediction.clinical_reasoning}
+                                            </p>
+                                        )}
                                     </div>
                                     {/* VGI Gauge */}
                                     <div className="relative w-28 h-28">
@@ -276,6 +289,9 @@ export default function Dashboard() {
                                                         <p className="text-sm font-semibold text-slate-700">{factor.factor}</p>
                                                         {factor.baseline && (
                                                             <p className="text-xs text-slate-400">Baseline: {factor.baseline} | Deviation: {factor.deviation > 0 ? '+' : ''}{factor.deviation}</p>
+                                                        )}
+                                                        {factor.clinical_note && (
+                                                            <p className="text-xs text-slate-400 mt-0.5 italic">{factor.clinical_note}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -374,19 +390,24 @@ export default function Dashboard() {
 
                             {/* Quick Stats */}
                             <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-card">
-                                <h3 className="text-sm font-bold text-slate-800 mb-3">Risk Scale</h3>
+                                <h3 className="text-sm font-bold text-slate-800 mb-3">Clinical Categories</h3>
+                                <p className="text-xs text-slate-400 mb-3">Classified by vital sign patterns, not score ranges</p>
                                 <div className="space-y-2">
                                     {[
-                                        { label: 'Stable', range: '0-30', color: '#10b981' },
-                                        { label: 'Inflammation', range: '30-50', color: '#f59e0b' },
-                                        { label: 'Cardiac Risk', range: '50-70', color: '#f97316' },
-                                        { label: 'Respiratory', range: '70-85', color: '#ef4444' },
-                                        { label: 'Critical', range: '85-100', color: '#dc2626' },
+                                        { label: 'Stable', desc: 'All normals', color: '#10b981' },
+                                        { label: 'Mild Abnormality', desc: 'Minor deviation', color: '#60a5fa' },
+                                        { label: 'Sepsis / SIRS', desc: 'Fever + HR/RR', color: '#f59e0b' },
+                                        { label: 'Cardiac Risk', desc: 'HR + BP instability', color: '#f97316' },
+                                        { label: 'Respiratory', desc: 'Low SpO₂ / high RR', color: '#ef4444' },
+                                        { label: 'Hypertensive', desc: 'BP >180/120', color: '#a855f7' },
+                                        { label: 'Shock', desc: 'Circulatory collapse', color: '#e11d48' },
+                                        { label: 'Multi-Organ', desc: '3+ systems affected', color: '#dc2626' },
+                                        { label: 'Critical', desc: 'Imminent collapse', color: '#991b1b' },
                                     ].map((item) => (
                                         <div key={item.label} className="flex items-center gap-2 text-xs">
-                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
                                             <span className="text-slate-600 flex-1">{item.label}</span>
-                                            <span className="text-slate-400 font-mono">{item.range}</span>
+                                            <span className="text-slate-400 text-[10px]">{item.desc}</span>
                                         </div>
                                     ))}
                                 </div>
