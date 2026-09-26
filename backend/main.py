@@ -8,6 +8,9 @@ from database import engine, Base
 from auth import router as auth_router
 from vitals import router as vitals_router
 from prediction import router as prediction_router
+from patients import router as patients_router
+from devices import router as devices_router
+from events import router as events_router
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -15,7 +18,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="VITAL-GUARD AI",
     description="Predictive Clinical Deterioration Monitoring Platform",
-    version="1.0.0",
+    version="2.0.0",
 )
 
 # CORS — allow frontend dev server
@@ -31,11 +34,14 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(vitals_router)
 app.include_router(prediction_router)
+app.include_router(patients_router)
+app.include_router(devices_router)
+app.include_router(events_router)
 
 
 @app.get("/api/health")
 def health():
-    return {"message": "VITAL-GUARD AI API is running", "version": "1.0.0"}
+    return {"message": "VITAL-GUARD AI API is running", "version": "2.0.0"}
 
 
 # Serve React static files

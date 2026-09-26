@@ -564,6 +564,22 @@ def predict_risk(current_vitals: dict, history: list) -> dict:
     # Use physiological pattern matching, NOT score thresholds
     category = classify_by_physiology(current_vitals, vgi, history)
 
+    # ── Override VGI if the ML model under-predicted a severe clinical condition ──
+    if category == "Critical Deterioration" and vgi < 85:
+        vgi = 85.0 + (15.0 * (vgi / 100))
+    elif category == "Hemodynamic Shock" and vgi < 80:
+        vgi = 80.0 + (15.0 * (vgi / 100))
+    elif category == "Multi-Organ Risk" and vgi < 75:
+        vgi = 75.0 + (15.0 * (vgi / 100))
+    elif category == "Sepsis / SIRS" and vgi < 70:
+        vgi = 70.0 + (15.0 * (vgi / 100))
+    elif category == "Cardiac Risk" and vgi < 70:
+        vgi = 70.0 + (15.0 * (vgi / 100))
+    elif category == "Respiratory Failure" and vgi < 70:
+        vgi = 70.0 + (15.0 * (vgi / 100))
+    
+    vgi = round(min(100.0, vgi), 1)
+
     # Estimate hours based on category + VGI
     hours = estimate_hours(vgi, category)
 

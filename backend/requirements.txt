@@ -8,3 +8,8 @@ pydantic==2.12.5
 scikit-learn==1.7.2
 pandas==2.3.3
 numpy==2.2.6
+scipy==1.15.3
+opencv-python-headless==5.0.0.93
+mediapipe==0.10.14
+matplotlib==3.10.9
+pillow==12.3.0

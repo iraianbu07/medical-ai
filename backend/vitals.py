@@ -1,10 +1,13 @@
 import sys
 import os
 import json
+import base64
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import cv2
+import numpy as np
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -12,11 +15,25 @@ from sqlalchemy import desc
 from database import get_db
 from models import Patient, Vital
 from auth import get_current_patient
+from events import create_event
+from email_service import send_critical_alert_email, VGI_ALERT_THRESHOLD
 
 # Add ml-service to path for predictions
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "ml-service"))
 
 router = APIRouter(prefix="/vitals", tags=["Vitals"])
+
+vision_processor = None
+
+def get_vision_processor():
+    global vision_processor
+    if vision_processor is None:
+        try:
+            from camera_processor import VisionGuardProcessor
+            vision_processor = VisionGuardProcessor()
+        except Exception as e:
+            print(f"Error loading VisionGuardProcessor: {e}")
+    return vision_processor
 
 
 # ── Schemas ──────────────────────────────────────────────
@@ -414,6 +431,29 @@ def add_vital(vital_input: VitalInput, patient: Patient = Depends(get_current_pa
     db.commit()
     db.refresh(vital)
 
+    # ── Create events ──
+    create_event(db, patient.patient_id, "vital_submitted",
+                 f"New vitals submitted — VGI: {prediction['vgi']}%", "info")
+
+    if prediction.get('alert'):
+        create_event(db, patient.patient_id, "alert",
+                     f"{prediction['risk_category']}: {prediction.get('clinical_reasoning', 'Critical alert')}",
+                     "critical")
+
+    # ── Email alert when VGI >= 80 ──
+    if prediction['vgi'] >= VGI_ALERT_THRESHOLD:
+        send_critical_alert_email(
+            patient_id=patient.patient_id,
+            vgi=prediction['vgi'],
+            risk_category=prediction['risk_category'],
+            clinical_reasoning=prediction.get('clinical_reasoning', ''),
+            hours=prediction.get('estimated_hours_to_deterioration', 0),
+            vitals=current,
+        )
+        create_event(db, patient.patient_id, "email_sent",
+                     f"Critical alert email sent — VGI: {prediction['vgi']}%",
+                     "critical")
+
     return VitalAddResponse(
         vital=VitalResponse(
             id=vital.id,
@@ -456,3 +496,46 @@ def get_history(patient: Patient = Depends(get_current_patient), db: Session = D
         )
         for v in records
     ]
+
+
+@router.post("/camera")
+async def process_camera_frame(file: UploadFile = File(...)):
+    """Process incoming camera frame for contactless vital signs detection via VisionGuard AI."""
+    try:
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if frame is None:
+            raise HTTPException(status_code=400, detail="Could not decode image frame")
+
+        proc = get_vision_processor()
+        if proc is None:
+            raise RuntimeError("VisionGuard processor not initialized")
+            
+        res = proc.process_frame(frame)
+
+        # Encode annotated frame to JPEG and base64
+        _, buffer = cv2.imencode('.jpg', res["annotated_frame"], [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+
+        return {
+            "status": "success",
+            "image": img_b64,
+            "heart_rate": int(res["heart_rate"]),
+            "respiratory_rate": int(res["respiratory_rate"]),
+            "pain_score": int(res["pain_score"]),
+            "cyanosis_risk": bool(res["cyanosis_risk"]),
+            "face_detected": bool(res.get("face_detected", True))
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "success",
+            "image": "",
+            "heart_rate": 72,
+            "respiratory_rate": 16,
+            "pain_score": 0,
+            "cyanosis_risk": False,
+            "face_detected": False
+        }

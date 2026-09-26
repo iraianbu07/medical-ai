@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = '';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
     baseURL: API_BASE,
@@ -35,6 +35,27 @@ export const vitalsAPI = {
 // Prediction API
 export const predictionAPI = {
     current: () => api.get('/prediction/current'),
+};
+
+// Patients API
+export const patientsAPI = {
+    profile: () => api.get('/patients/profile'),
+    updateProfile: (data) => api.put('/patients/profile', data),
+    list: () => api.get('/patients/list'),
+};
+
+// Devices API
+export const devicesAPI = {
+    list: () => api.get('/devices/list'),
+    add: (data) => api.post('/devices/add', data),
+    updateStatus: (id, data) => api.put(`/devices/${id}/status`, data),
+    remove: (id) => api.delete(`/devices/${id}`),
+};
+
+// Events API
+export const eventsAPI = {
+    list: (limit = 50) => api.get(`/events/list?limit=${limit}`),
+    recent: () => api.get('/events/recent'),
 };
 
 export default api;

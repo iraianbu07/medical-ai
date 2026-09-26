@@ -36,69 +36,85 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        <div className="min-h-screen flex items-center justify-center p-4 relative transition-colors duration-300" style={{ background: 'var(--bg-primary)' }}>
+            {/* Animated background */}
+            <div className="bg-mesh"></div>
+
+            {/* Background orbs */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl animate-pulse-slow" style={{ background: 'rgba(139, 92, 246, 0.08)' }}></div>
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl animate-pulse-slow" style={{ background: 'rgba(99, 102, 241, 0.06)', animationDelay: '1s' }}></div>
             </div>
 
-            <div className="relative w-full max-w-md animate-scale-in">
+            <div className="heartbeat-bg"></div>
+
+            <div className="relative w-full max-w-md animate-scale-in z-10">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25 mb-4">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 logo-glow mb-4">
+                        <svg className="w-8 h-8 text-white heart-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                     </div>
                     <h1 className="text-3xl font-bold text-white tracking-tight">Create Account</h1>
-                    <p className="text-slate-400 mt-2 text-sm">Join VITAL-GUARD AI monitoring platform</p>
+                    <p className="text-slate-500 mt-2 text-sm">Join <span className="gradient-text font-semibold">VITAL-GUARD AI</span> monitoring platform</p>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+                <div className="glass-card p-8 glow-border">
                     <h2 className="text-xl font-semibold text-white mb-6">Register</h2>
 
                     {error && (
-                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm animate-fade-in">
+                        <div className="mb-4 p-3 rounded-xl text-red-400 text-sm animate-fade-in"
+                            style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
                             {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Patient ID</label>
+                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Patient ID</label>
                             <input
                                 id="register-patient-id"
                                 type="text"
                                 value={patientId}
                                 onChange={(e) => setPatientId(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 transition-all duration-200 hover:border-indigo-500/30 focus:border-indigo-500/50"
+                                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-600 transition-all duration-300"
+                                style={{ background: 'rgba(99, 102, 241, 0.04)', border: '1px solid rgba(99, 102, 241, 0.1)' }}
                                 placeholder="Choose a Patient ID"
                                 required
+                                onFocus={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.4)'; e.target.style.background = 'rgba(99, 102, 241, 0.08)'; }}
+                                onBlur={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.1)'; e.target.style.background = 'rgba(99, 102, 241, 0.04)'; }}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Password</label>
                             <input
                                 id="register-password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 transition-all duration-200 hover:border-indigo-500/30 focus:border-indigo-500/50"
+                                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-600 transition-all duration-300"
+                                style={{ background: 'rgba(99, 102, 241, 0.04)', border: '1px solid rgba(99, 102, 241, 0.1)' }}
                                 placeholder="Create a password"
                                 required
+                                onFocus={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.4)'; e.target.style.background = 'rgba(99, 102, 241, 0.08)'; }}
+                                onBlur={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.1)'; e.target.style.background = 'rgba(99, 102, 241, 0.04)'; }}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Confirm Password</label>
                             <input
                                 id="register-confirm-password"
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 transition-all duration-200 hover:border-indigo-500/30 focus:border-indigo-500/50"
+                                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-600 transition-all duration-300"
+                                style={{ background: 'rgba(99, 102, 241, 0.04)', border: '1px solid rgba(99, 102, 241, 0.1)' }}
                                 placeholder="Confirm your password"
                                 required
+                                onFocus={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.4)'; e.target.style.background = 'rgba(99, 102, 241, 0.08)'; }}
+                                onBlur={(e) => { e.target.style.borderColor = 'rgba(99, 102, 241, 0.1)'; e.target.style.background = 'rgba(99, 102, 241, 0.04)'; }}
                             />
                         </div>
 
@@ -106,7 +122,14 @@ export default function RegisterPage() {
                             id="register-button"
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full py-3 px-4 text-white font-semibold rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed btn-glow btn-ripple"
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%)',
+                                backgroundSize: '200% auto',
+                                boxShadow: '0 0 20px rgba(99, 102, 241, 0.3), 0 4px 15px rgba(0, 0, 0, 0.3)',
+                            }}
+                            onMouseEnter={(e) => { e.target.style.backgroundPosition = 'right center'; e.target.style.transform = 'scale(1.02)'; }}
+                            onMouseLeave={(e) => { e.target.style.backgroundPosition = 'left center'; e.target.style.transform = 'scale(1)'; }}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -120,7 +143,7 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-slate-400 text-sm">
+                    <p className="mt-6 text-center text-slate-500 text-sm">
                         Already have an account?{' '}
                         <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                             Sign in

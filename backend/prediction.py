@@ -30,6 +30,7 @@ def get_current_prediction(patient: Patient = Depends(get_current_patient), db: 
             "timeline": [],
             "alert": False,
             "alert_message": None,
+            "current_vitals": {},
         }
 
     latest = history_records[-1]
@@ -54,4 +55,6 @@ def get_current_prediction(patient: Patient = Depends(get_current_patient), db: 
         for v in history_records[:-1]
     ]
 
-    return get_prediction(current, history)
+    result = get_prediction(current, history)
+    result["current_vitals"] = current
+    return result
