@@ -498,9 +498,12 @@ def get_history(patient: Patient = Depends(get_current_patient), db: Session = D
     ]
 
 
+class CameraScenarioRequest(BaseModel):
+    scenario: str
+
 @router.post("/camera")
 async def process_camera_frame(file: UploadFile = File(...)):
-    """Process incoming camera frame for contactless vital signs detection via VisionGuard AI."""
+    """Process incoming camera frame for multimodal patient assessment & clinical prediction recalculation."""
     try:
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
@@ -521,21 +524,260 @@ async def process_camera_frame(file: UploadFile = File(...)):
         return {
             "status": "success",
             "image": img_b64,
-            "heart_rate": int(res["heart_rate"]),
-            "respiratory_rate": int(res["respiratory_rate"]),
-            "pain_score": int(res["pain_score"]),
-            "cyanosis_risk": bool(res["cyanosis_risk"]),
-            "face_detected": bool(res.get("face_detected", True))
+            "face_detected": bool(res.get("face_detected", False)),
+            "pain_score": int(res.get("pain_score", 0)),
+            "pain_level": str(res.get("pain_level", "No Pain / Relaxed")),
+            "action_units": res.get("action_units", {"au4_brow": 0.0, "au6_squint": 0.0, "au25_mouth": 0.0}),
+            "consciousness_state": str(res.get("consciousness_state", "Alert")),
+            "eye_aspect_ratio": float(res.get("eye_aspect_ratio", 0.28)),
+            "facial_symmetry": int(res.get("facial_symmetry", 95)),
+            "stroke_risk_flag": bool(res.get("stroke_risk_flag", False)),
+            "respiratory_effort": str(res.get("respiratory_effort", "Normal")),
+            "perfusion_status": str(res.get("perfusion_status", "Normal Perfusion")),
+            "cyanosis_risk": bool(res.get("cyanosis_risk", False)),
+            "rass_score": int(res.get("rass_score", 0)),
+            "motion_activity": str(res.get("motion_activity", "Calm")),
+            "heart_rate": int(res.get("heart_rate", 0)),
+            "respiratory_rate": int(res.get("respiratory_rate", 0)),
+            "prediction_impact": res.get("prediction_impact", {
+                "baseline_vgi": 20,
+                "adjusted_vgi": 20,
+                "risk_level": "STABLE",
+                "clinical_driver": "Baseline continuous monitoring",
+                "emergency_alert": None,
+                "recommended_actions": ["Routine monitoring"]
+            })
         }
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {
-            "status": "success",
+            "status": "error",
+            "message": str(e),
             "image": "",
-            "heart_rate": 72,
-            "respiratory_rate": 16,
+            "face_detected": False,
             "pain_score": 0,
+            "pain_level": "Awaiting Subject",
+            "consciousness_state": "Standby",
+            "eye_aspect_ratio": 0.0,
+            "facial_symmetry": 0,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Standby",
+            "perfusion_status": "Standby",
             "cyanosis_risk": False,
-            "face_detected": False
+            "heart_rate": 0,
+            "respiratory_rate": 0,
+            "prediction_impact": {
+                "baseline_vgi": 0,
+                "adjusted_vgi": 0,
+                "risk_level": "STANDBY",
+                "clinical_driver": "Awaiting optical sensor lock",
+                "emergency_alert": None,
+                "recommended_actions": ["Position patient directly in front of camera"]
+            }
         }
+
+
+@router.post("/camera/simulate")
+async def simulate_clinical_possibility(req: CameraScenarioRequest):
+    """Return full clinical simulation data for all patient assessment possibilities."""
+    scenario = req.scenario.lower().strip()
+    
+    if scenario == "acute_pain":
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "acute_pain",
+            "scenario_title": "Acute Severe Pain & Facial Grimacing",
+            "pain_score": 8,
+            "pain_level": "Severe Acute Pain",
+            "action_units": {"au4_brow": 0.88, "au6_squint": 0.82, "au25_mouth": 0.74},
+            "consciousness_state": "Alert",
+            "eye_aspect_ratio": 0.16,
+            "facial_symmetry": 93,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Tachypneic",
+            "perfusion_status": "Normal Perfusion",
+            "cyanosis_risk": False,
+            "rass_score": 1,
+            "motion_activity": "Restless",
+            "heart_rate": 108,
+            "respiratory_rate": 24,
+            "prediction_impact": {
+                "baseline_vgi": 22,
+                "adjusted_vgi": 78,
+                "risk_level": "HIGH RISK",
+                "clinical_driver": "Severe Acute Facial Grimace (FLACC 8/10) with Sympathetic Tachycardia (108 bpm)",
+                "emergency_alert": "ACUTE PAIN CRISIS / ISCHEMIC DISTRESS",
+                "recommended_actions": [
+                    "Initiate Stat IV Analgesia Protocol per physician order",
+                    "Obtain STAT 12-lead ECG (rule out acute coronary syndrome / silent ischemia)",
+                    "Perform targeted abdominal & visceral exam to locate acute agony etiology"
+                ]
+            }
+        }
+    elif scenario == "stroke_droop":
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "stroke_droop",
+            "scenario_title": "Acute Stroke / Hemifacial Droop (FAST Protocol)",
+            "pain_score": 2,
+            "pain_level": "Mild Discomfort",
+            "action_units": {"au4_brow": 0.15, "au6_squint": 0.20, "au25_mouth": 0.45},
+            "consciousness_state": "Drowsy / Sedated",
+            "eye_aspect_ratio": 0.18,
+            "facial_symmetry": 61,
+            "stroke_risk_flag": True,
+            "respiratory_effort": "Normal",
+            "perfusion_status": "Normal Perfusion",
+            "cyanosis_risk": False,
+            "rass_score": 0,
+            "motion_activity": "Calm",
+            "heart_rate": 84,
+            "respiratory_rate": 17,
+            "prediction_impact": {
+                "baseline_vgi": 24,
+                "adjusted_vgi": 94,
+                "risk_level": "CRITICAL EMERGENCY",
+                "clinical_driver": "Severe Facial Asymmetry (61% - Unilateral Hemifacial Droop / FAST Positive)",
+                "emergency_alert": "EMERGENCY CODE STROKE ALERT",
+                "recommended_actions": [
+                    "STAT Non-Contrast Head CT Scan within 20 minutes (Stroke Pathway)",
+                    "Initiate Code Stroke: Page on-call Vascular Neurologist immediately",
+                    "Perform formal NIHSS evaluation & prepare for IV Thrombolysis (tPA/TNK) eligibility check"
+                ]
+            }
+        }
+    elif scenario == "respiratory_distress":
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "respiratory_distress",
+            "scenario_title": "Severe Respiratory Distress & Accessory Muscle Use",
+            "pain_score": 5,
+            "pain_level": "Moderate Pain",
+            "action_units": {"au4_brow": 0.45, "au6_squint": 0.50, "au25_mouth": 0.85},
+            "consciousness_state": "Alert",
+            "eye_aspect_ratio": 0.25,
+            "facial_symmetry": 95,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Labored",
+            "perfusion_status": "Cyanosis Risk",
+            "cyanosis_risk": True,
+            "rass_score": 1,
+            "motion_activity": "Restless",
+            "heart_rate": 118,
+            "respiratory_rate": 32,
+            "prediction_impact": {
+                "baseline_vgi": 25,
+                "adjusted_vgi": 86,
+                "risk_level": "CRITICAL EMERGENCY",
+                "clinical_driver": "Labored Breathing & Accessory Muscle Strain with Severe Tachypnea (32 rpm)",
+                "emergency_alert": "IMPENDING RESPIRATORY FAILURE / ARDS ALERT",
+                "recommended_actions": [
+                    "Escalate oxygen therapy immediately to High-Flow Nasal Cannula (HFNC) or non-invasive BiPAP",
+                    "Draw STAT Arterial Blood Gas (ABG) for PaO2/PaCO2 and pH monitoring",
+                    "Prepare bedside rapid sequence intubation (RSI) equipment in case of exhaustion"
+                ]
+            }
+        }
+    elif scenario == "somnolent_drowsy":
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "somnolent_drowsy",
+            "scenario_title": "Somnolent / Depressed Consciousness (Stupor Risk)",
+            "pain_score": 0,
+            "pain_level": "No Pain / Relaxed",
+            "action_units": {"au4_brow": 0.05, "au6_squint": 0.10, "au25_mouth": 0.05},
+            "consciousness_state": "Unresponsive / Lethargic",
+            "eye_aspect_ratio": 0.11,
+            "facial_symmetry": 94,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Normal",
+            "perfusion_status": "Normal Perfusion",
+            "cyanosis_risk": False,
+            "rass_score": -2,
+            "motion_activity": "Sedated / Immobile",
+            "heart_rate": 58,
+            "respiratory_rate": 11,
+            "prediction_impact": {
+                "baseline_vgi": 20,
+                "adjusted_vgi": 64,
+                "risk_level": "HIGH RISK",
+                "clinical_driver": "Depressed Level of Consciousness (EAR 0.11, persistent eye closure, Bradypnea 11 rpm)",
+                "emergency_alert": "CENTRAL NERVOUS DEPRESSION / ENCEPHALOPATHY",
+                "recommended_actions": [
+                    "Evaluate Glasgow Coma Scale (GCS) and bilateral pupillary light response",
+                    "Check immediate capillary blood glucose to rule out hypoglycemia",
+                    "Review active sedation/opioid orders and prepare Naloxone if indicated"
+                ]
+            }
+        }
+    elif scenario == "hypoperfusion_cyanosis":
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "hypoperfusion_cyanosis",
+            "scenario_title": "Microvascular Pallor & Peripheral Cyanosis (Shock Sign)",
+            "pain_score": 3,
+            "pain_level": "Mild Discomfort",
+            "action_units": {"au4_brow": 0.25, "au6_squint": 0.30, "au25_mouth": 0.20},
+            "consciousness_state": "Drowsy / Sedated",
+            "eye_aspect_ratio": 0.19,
+            "facial_symmetry": 93,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Tachypneic",
+            "perfusion_status": "Cyanosis Risk",
+            "cyanosis_risk": True,
+            "rass_score": 0,
+            "motion_activity": "Calm",
+            "heart_rate": 112,
+            "respiratory_rate": 26,
+            "prediction_impact": {
+                "baseline_vgi": 22,
+                "adjusted_vgi": 89,
+                "risk_level": "CRITICAL EMERGENCY",
+                "clinical_driver": "Perioral Cyanosis & Malar Pallor Indicating Systemic Microvascular Hypoperfusion",
+                "emergency_alert": "SEPTIC / HYPOVOLEMIC SHOCK ALERT",
+                "recommended_actions": [
+                    "Assess capillary refill time & obtain STAT Serum Lactate level",
+                    "Verify peripheral vs core oxygen saturation; titrate oxygen to SpO2 > 94%",
+                    "Initiate IV crystalloid fluid bolus (30 mL/kg) if hemodynamically unstable"
+                ]
+            }
+        }
+    else:  # resting_stable
+        return {
+            "status": "success",
+            "face_detected": True,
+            "scenario": "resting_stable",
+            "scenario_title": "Resting Patient (Clinically Stable & Comfortable)",
+            "pain_score": 0,
+            "pain_level": "No Pain / Relaxed",
+            "action_units": {"au4_brow": 0.05, "au6_squint": 0.08, "au25_mouth": 0.05},
+            "consciousness_state": "Alert",
+            "eye_aspect_ratio": 0.29,
+            "facial_symmetry": 98,
+            "stroke_risk_flag": False,
+            "respiratory_effort": "Normal",
+            "perfusion_status": "Normal Perfusion",
+            "cyanosis_risk": False,
+            "rass_score": 0,
+            "motion_activity": "Calm",
+            "heart_rate": 72,
+            "respiratory_rate": 15,
+            "prediction_impact": {
+                "baseline_vgi": 18,
+                "adjusted_vgi": 16,
+                "risk_level": "STABLE",
+                "clinical_driver": "Patient resting comfortably with symmetrical facial musculature and calm eupneic breathing",
+                "emergency_alert": None,
+                "recommended_actions": [
+                    "Maintain routine continuous ward telemetry monitoring",
+                    "Schedule next standard nursing visual check"
+                ]
+            }
+        }
+

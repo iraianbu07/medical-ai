@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../AuthContext';
+import { vitalsAPI, predictionAPI } from '../api';
 
 // Clinical Patient Scenarios for 3D Twin Demonstration
 const CLINICAL_PATIENTS = [
